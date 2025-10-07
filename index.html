@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blarq Media Stream</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: black;
+      color: white;
+      margin: 0;
+      overflow-x: hidden;
+    }
+
+    header {
+      background: maroon;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav {
+      display: flex;
+      gap: 15px;
+    }
+
+    .nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .container {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 20px;
+      transition: background-color 0.3s ease;
+    }
+
+    .interactive, .blog {
+      background-color: black;
+      padding: 20px;
+      border-radius: 10px;
+      width: 48%;
+      box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+      transition: background-color 0.5s ease;
+    }
+
+    .interactive:hover, .blog:hover {
+      background-color: maroon;
+    }
+
+    .post {
+      background: #111;
+      border: 1px solid maroon;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      position: relative;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .post h3 {
+      margin-top: 0;
+    }
+
+    .delete {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: maroon;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      width: 25px;
+      height: 25px;
+    }
+
+    .media img, .media video {
+      width: 100%;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+
+    #publish {
+      background-color: maroon;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #publish:hover {
+      background-color: #cc0000;
+    }
+
+    .stream-btn {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 1000;
+    }
+
+    .s-circle {
+      background: maroon;
+      color: white;
+      font-weight: bold;
+      font-size: 20px;
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .s-label {
+      opacity: 0;
+      color: white;
+      background: maroon;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transform: translateX(20px);
+      transition: all 0.3s ease;
+    }
+
+    .stream-btn:hover .s-circle {
+      background: white;
+      color: maroon;
+    }
+
+    .stream-btn:hover .s-label {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .overlay.show {
+      display: flex;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .popup {
+      background: #111;
+      border-radius: 12px;
+      width: 70%;
+      max-width: 700px;
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+      transition: transform 0.3s ease;
+      position: relative;
+    }
+
+    .popup .titlebar {
+      background: maroon;
+      color: white;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: grab;
+    }
+
+    .popup video {
+      width: 100%;
+      display: block;
+    }
+
+    .popup .close {
+      background: transparent;
+      border: none;
+      font-size: 24px;
+      color: white;
+      cursor: pointer;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="nav">
+      <a href="#">Home</a>
+      <a href="#">Media</a>
+      <a href="#">Streams</a>
+      <a href="#">Contact</a>
+    </div>
+    <h2>Blarq Media</h2>
+  </header>
+
+  <div class="container">
+    <div class="interactive">
+      <h2>Create a Blog Post</h2>
+      <input type="text" id="postTitle" placeholder="Enter title..." style="width:100%; padding:10px;"><br><br>
+      <textarea id="postText" rows="4" placeholder="Write something..." style="width:100%; padding:10px;"></textarea><br><br>
+      <input type="file" id="postMedia" multiple><br><br>
+      <button id="publish">Publish Post</button>
+    </div>
+
+    <div class="blog">
+      <h2>Latest Posts</h2>
+      <div id="posts"></div>
+    </div>
+  </div>
+
+  <script>
+    // --- LocalStorage Blog Logic ---
+    const postsContainer = document.getElementById('posts');
+    const publishBtn = document.getElementById('publish');
+    const titleInput = document.getElementById('postTitle');
+    const textInput = document.getElementById('postText');
+    const mediaInput = document.getElementById('postMedia');
+
+    let posts = JSON.parse(localStorage.getItem('blarq_posts') || '[]');
+    renderPosts();
+
+    publishBtn.addEventListener('click', () => {
+      const title = titleInput.value.trim();
+      const text = textInput.value.trim();
+
+      if (!title && !text && !mediaInput.files.length) {
+        alert('Write something or upload media first!');
+        return;
+      }
+
+      const post = {
+        id: Date.now(),
+        title,
+        text,
+        media: [],
+        date: new Date().toLocaleString()
+      };
+
+      if (mediaInput.files.length > 0) {
+        for (const file of mediaInput.files) {
+          const reader = new FileReader();
+          reader.onload = e => {
+            post.media.push({ type: file.type.startsWith('video') ? 'video' : 'image', data: e.target.result });
+            saveAndRender(post);
+          };
+          reader.readAsDataURL(file);
+        }
+      } else {
+        saveAndRender(post);
+      }
+
+      titleInput.value = '';
+      textInput.value = '';
+      mediaInput.value = '';
+    });
+
+    function saveAndRender(post) {
+      if (!posts.find(p => p.id === post.id)) posts.unshift(post);
+      localStorage.setItem('blarq_posts', JSON.stringify(posts));
+      renderPosts();
+    }
+
+    function renderPosts() {
+      postsContainer.innerHTML = '';
+      posts.forEach(post => {
+        const el = document.createElement('div');
+        el.className = 'post';
+        el.innerHTML = `
+          <button class="delete" data-id="${post.id}">×</button>
+          ${post.title ? `<h3>${post.title}</h3>` : ''}
+          ${post.text ? `<p>${post.text}</p>` : ''}
+          <small>${post.date}</small>
+          ${post.media.map(m => m.type === 'image'
+            ? `<div class="media"><img src="${m.data}"></div>`
+            : `<div class="media"><video controls src="${m.data}"></video></div>`
+          ).join('')}
+        `;
+        postsContainer.appendChild(el);
+      });
+
+      document.querySelectorAll('.delete').forEach(btn => {
+        btn.addEventListener('click', e => {
+          const id = Number(e.target.dataset.id);
+          posts = posts.filter(p => p.id !== id);
+          localStorage.setItem('blarq_posts', JSON.stringify(posts));
+          renderPosts();
+        });
+      });
+    }
+
+    // --- Streaming Popup Logic ---
+    const streamBtn = document.createElement('div');
+    streamBtn.className = 'stream-btn';
+    streamBtn.innerHTML = `
+      <div class="s-circle">S</div>
+      <div class="s-label">Stream</div>
+    `;
+    document.body.appendChild(streamBtn);
+
+    const overlay = document.createElement('div');
+    overlay.className = 'overlay';
+    overlay.innerHTML = `
+      <div class="popup" id="popupWindow">
+        <div class="titlebar">
+          <h4>Live Stream</h4>
+          <button class="close">&times;</button>
+        </div>
+        <div class="content">
+          <video id="popupVideo" controls autoplay playsinline></video>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const popup = document.getElementById('popupWindow');
+    const popupVideo = document.getElementById('popupVideo');
+    const closePopup = popup.querySelector('.close');
+
+    streamBtn.onclick = () => overlay.classList.add('show');
+    closePopup.onclick = () => overlay.classList.remove('show');
+
+    // Draggable popup
+    let isDragging = false, startX, startY, initX, initY;
+    popup.querySelector('.titlebar').addEventListener('mousedown', e => {
+      isDragging = true;
+      startX = e.clientX; startY = e.clientY;
+      const rect = popup.getBoundingClientRect();
+      initX = rect.left; initY = rect.top;
+    });
+    document.addEventListener('mouseup', () => isDragging = false);
+    document.addEventListener('mousemove', e => {
+      if (!isDragging) return;
+      popup.style.position = 'fixed';
+      popup.style.left = initX + (e.clientX - startX) + 'px';
+      popup.style.top = initY + (e.clientY - startY) + 'px';
+    });
+  </script>
+</body>
+</html>
