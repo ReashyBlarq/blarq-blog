@@ -1,340 +1,385 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Blarq’s College Blog</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blarq Media Stream</title>
   <style>
-    :root{
-      --maroon:#800000;
-      --black:#000000;
-      --light:#e9e9e9;
-      --header-h:72px;
-    }
-    html{scroll-behavior:smooth}
-    body{
-      margin:0;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-      background: linear-gradient(to bottom right, rgba(0,0,0,1) 70%, rgba(128,0,0,1) 30%);
-      color:var(--light);
-      min-height:100vh;
+    body {
+      font-family: Arial, sans-serif;
+      background-color: black;
+      color: white;
+      margin: 0;
+      overflow-x: hidden;
     }
 
-    /* Fixed Header */
-    header.topbar{
-      position:fixed;top:0;left:0;right:0;height:var(--header-h);display:flex;align-items:center;justify-content:space-between;
-      padding:0 18px;box-sizing:border-box;z-index:1200;
-      background:linear-gradient(90deg,var(--black),var(--maroon));
-      box-shadow:0 6px 18px rgba(0,0,0,0.6);
+    header {
+      background: maroon;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    .leftHeader{display:flex;align-items:center;gap:22px}
-    .brand{
-      display:flex;align-items:center;gap:12px;color:#fff;font-weight:800;letter-spacing:2px;font-size:20px;text-transform:uppercase
-    }
-    /* inline fallback logo (diamond with B) */
-    #logoFallback{width:44px;height:44px;display:none}
-    .brand img{width:44px;height:44px;border-radius:6px;object-fit:contain;display:block}
-    .brand .name{
-      position:relative;color:#f3f3f3;font-size:20px;font-weight:800;text-shadow:0 0 8px rgba(128,0,0,0.6);
+    .nav {
+      display: flex;
+      gap: 15px;
     }
 
-    nav.topnav{display:flex;gap:18px;align-items:center}
-    nav.topnav a{color:rgba(230,230,230,0.9);text-decoration:none;font-weight:600;padding:6px 8px;border-radius:6px;transition:all .18s ease}
-    nav.topnav a:hover{color:var(--maroon);transform:scale(1.03);text-shadow:0 0 6px rgba(128,0,0,0.25)}
-
-    /* page layout - leave space for fixed header */
-    main{padding:calc(var(--header-h) + 20px) 20px 40px;display:flex;gap:20px;box-sizing:border-box; /* normal flow: interactive left, blog right */ }
-
-    /* Blog area (pure black) on the right */
-    .blog{
-      flex:2;background:var(--black);padding:28px;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,0.6);min-height:60vh;overflow:auto;
-      width:68%;
+    .nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: bold;
     }
-    .post{background:transparent;border-left:4px solid var(--maroon);padding:14px;border-radius:8px;margin-bottom:18px;position:relative}
-    .post h3{margin:0 0 6px 0;color:#fff}
-    .post p{margin:0;color:#ddd}
-    .post small{color:#bbb;display:block;margin-top:8px}
-    .media{margin-top:10px;display:flex;flex-direction:column;gap:10px}
-    .media img,.media video{max-width:100%;border-radius:8px}
-    .post .delete{position:absolute;top:12px;right:12px;background:#222;border:1px solid rgba(255,255,255,0.06);color:#fff;padding:6px 8px;border-radius:6px;cursor:pointer}
 
-    /* Left column - interactive area */
-    .sidebar{width:30%;display:flex;flex-direction:column;gap:16px}
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));padding:16px;border-radius:10px}
-    .card input[type=text],.card textarea,.card input[type=file]{width:100%;padding:10px;border-radius:8px;background:#120202;border:1px solid rgba(255,255,255,0.05);color:var(--light);box-sizing:border-box}
-    .card button{background:var(--maroon);color:#fff;border:none;padding:10px;border-radius:8px;font-weight:700;cursor:pointer}
-    .card button:hover{filter:brightness(1.05)}
-
-    /* Floating streaming button */
-    .stream-btn{
-      position:fixed;right:30px;bottom:30px;z-index:1500;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .22s ease
+    /* ===== Layout Container ===== */
+    .container {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 20px;
+      transition: background-color 0.3s ease;
+      flex-wrap: wrap;
     }
-    .s-circle{width:64px;height:64px;border-radius:50%;background:linear-gradient(180deg,var(--black),#220000);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:22px;box-shadow:0 10px 28px rgba(128,0,0,0.38);border:2px solid rgba(128,0,0,0.18)}
-    .s-label{background:rgba(0,0,0,0.6);padding:8px 14px;border-radius:22px;color:#fff;font-weight:700;border:1px solid rgba(255,255,255,0.03);transform-origin:right center;opacity:0;pointer-events:none;transform:translateX(10px);transition:all .18s ease}
-    .stream-btn:hover .s-label{opacity:1;transform:translateX(0)}
 
-    /* Popup overlay (centered, fade-in) */
-    .overlay{position:fixed;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:1600}
-    .overlay.show{opacity:1;pointer-events:auto}
-    .popup{width:720px;max-width:92vw;background:var(--black);border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,0.8);transform:translateY(-8px);transition:all .22s ease;border:1px solid rgba(128,0,0,0.2);position:relative}
+    /* ===== Interactive (Create Post) ===== */
+    .interactive {
+      background-color: black;
+      padding: 20px;
+      border-radius: 10px;
+      width: 35%; /* narrower */
+      box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+      transition: background-color 0.5s ease;
+    }
 
-    .popup .titlebar{background:linear-gradient(90deg,var(--maroon),#440000);padding:10px 14px;border-top-left-radius:12px;border-top-right-radius:12px;cursor:grab;display:flex;align-items:center;justify-content:space-between;color:#fff}
-    .popup .titlebar h4{margin:0;font-weight:700}
-    .popup .titlebar .close{background:transparent;border:none;color:#fff;font-size:20px;cursor:pointer}
+    /* ===== Blog Section ===== */
+    .blog {
+      background-color: black;
+      padding: 20px;
+      border-radius: 10px;
+      width: 60%; /* more space for blog */
+      box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+      transition: background-color 0.5s ease;
+    }
 
-    .popup .content{padding:16px;color:#ddd}
-    .popup .content video{width:100%;background:#000;border-radius:8px}
+    .interactive:hover,
+    .blog:hover {
+      background-color: maroon;
+    }
 
-    /* saved notification bottom-right */
-    #saveNotification{position:fixed;right:30px;bottom:110px;background:#2b2b2b;color:#fff;padding:10px 14px;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,0.6);opacity:0;pointer-events:none;transition:opacity .3s}
+    .post {
+      background: #111;
+      border: 1px solid maroon;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      position: relative;
+      animation: fadeIn 0.5s ease;
+    }
 
-    /* responsive tweaks */
-    @media(max-width:900px){main{flex-direction:column;padding-top:calc(var(--header-h) + 10px)} .sidebar{order:2;width:100%} .blog{order:1;width:100%}}
+    .post h3 {
+      margin-top: 0;
+    }
+
+    .delete {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: maroon;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      width: 25px;
+      height: 25px;
+    }
+
+    .media img,
+    .media video {
+      width: 100%;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+
+    #publish {
+      background-color: maroon;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    #publish:hover {
+      background-color: #cc0000;
+    }
+
+    /* ===== Stream Icon Button ===== */
+    .stream-btn {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 1000;
+    }
+
+    .s-circle {
+      background: maroon;
+      color: white;
+      font-weight: bold;
+      font-size: 20px;
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .s-label {
+      opacity: 0;
+      color: white;
+      background: maroon;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transform: translateX(20px);
+      transition: all 0.3s ease;
+    }
+
+    .stream-btn:hover .s-circle {
+      background: white;
+      color: maroon;
+    }
+
+    .stream-btn:hover .s-label {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* ===== Popup Streaming Window ===== */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .overlay.show {
+      display: flex;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .popup {
+      background: #111;
+      border-radius: 12px;
+      width: 70%;
+      max-width: 700px;
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+      transition: transform 0.3s ease;
+      position: relative;
+    }
+
+    .popup .titlebar {
+      background: maroon;
+      color: white;
+      padding: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: grab;
+    }
+
+    .popup video {
+      width: 100%;
+      display: block;
+    }
+
+    .popup .close {
+      background: transparent;
+      border: none;
+      font-size: 24px;
+      color: white;
+      cursor: pointer;
+    }
+
+    /* ===== Animations & Responsiveness ===== */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        gap: 15px;
+      }
+      .interactive, .blog {
+        width: 100%;
+      }
+    }
   </style>
 </head>
+
 <body>
-
-  <header class="topbar">
-    <div class="leftHeader">
-      <div class="brand" style="gap:10px">
-        <!-- inline SVG fallback diamond B -->
-        <svg id="logoFallback" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <rect x="10" y="10" width="80" height="80" rx="8" transform="rotate(45 50 50)" fill="none" stroke="#fff" stroke-width="6" />
-          <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#fff" font-family="Arial" font-size="36" font-weight="700">B</text>
-        </svg>
-
-        <img src="icon.png" id="brandLogo" alt="BLARQ logo" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='block'" onload="document.getElementById('logoFallback').style.display='none'" />
-
-        <div class="name">BLARQ</div>
-      </div>
-
-      <nav class="topnav" style="margin-left:8px">
-        <a href="#home" data-target="home">Home</a>
-        <a href="#videos" data-target="videos">Videos</a>
-        <a href="#photos" data-target="photos">Photos</a>
-        <a href="#about" data-target="about">About</a>
-      </nav>
+  <header>
+    <div class="nav">
+      <a href="#">Home</a>
+      <a href="#">Media</a>
+      <a href="#">Streams</a>
+      <a href="#">Contact</a>
     </div>
-
-    <div style="width:140px;display:flex;justify-content:flex-end;align-items:center"></div>
+    <h2>Blarq Media</h2>
   </header>
 
-  <main>
-    <section class="blog" id="home">
-      <div style="margin-bottom:18px">
-        <h2 style="margin:0 0 8px 0;color:#fff">Welcome to BLARQ’s College Blog</h2>
-        <p style="color:#ccc;margin:0 0 6px 0">A place to stream, share and save your college moments.</p>
-      </div>
+  <div class="container">
+    <div class="interactive">
+      <h2>Create a Blog Post</h2>
+      <input type="text" id="postTitle" placeholder="Enter title..." style="width:100%; padding:10px;"><br><br>
+      <textarea id="postText" rows="4" placeholder="Write something..." style="width:100%; padding:10px;"></textarea><br><br>
+      <input type="file" id="postMedia" multiple><br><br>
+      <button id="publish">Publish Post</button>
+    </div>
 
+    <div class="blog">
+      <h2>Latest Posts</h2>
       <div id="posts"></div>
-    </section>
-
-    <aside class="sidebar">
-      <div class="card" id="videos">
-        <h3 style="margin-top:0;color:#fff">Stream / Upload Video</h3>
-        <video id="streamPlayer" controls playsinline style="width:100%;background:#000;border-radius:8px;height:220px;"></video>
-        <div style="display:flex;gap:8px;margin-top:8px">
-          <button id="startCam">Start Cam</button>
-          <button id="stopCam">Stop Cam</button>
-        </div>
-        <div style="margin-top:8px;display:flex;gap:8px">
-          <input id="streamUrl" type="text" placeholder="Paste stream/video URL" style="flex:1">
-          <button id="loadUrl">Load</button>
-        </div>
-      </div>
-
-      <div class="card" id="photos">
-        <h3 style="margin-top:0;color:#fff">Create Post</h3>
-        <input type="text" id="postTitle" placeholder="Post title (optional)">
-        <textarea id="postText" rows="4" placeholder="Write your post..."></textarea>
-        <input type="file" id="postMedia" accept="image/*,video/*" multiple>
-        <button id="publish">Publish Post</button>
-      </div>
-
-      <div class="card" id="about">
-        <h3 style="margin-top:0;color:#fff">About</h3>
-        <p style="color:#ccc;margin:0">BLARQ — your college media blog. Posts and media are stored locally on your device. Camera requires HTTPS or localhost.</p>
-      </div>
-    </aside>
-  </main>
-
-  <!-- floating stream button -->
-  <div class="stream-btn" id="streamBtn" title="Open Stream">
-    <div class="s-label">Stream</div>
-    <div class="s-circle">S</div>
-  </div>
-
-  <!-- overlay popup -->
-  <div class="overlay" id="overlay">
-    <div class="popup" id="popup">
-      <div class="titlebar" id="dragHandle">
-        <h4>🎥 Streaming Window</h4>
-        <button class="close" id="closePopup">×</button>
-      </div>
-      <div class="content">
-        <p style="color:#bbb;margin-top:0">Use the controls below to start your webcam or load a stream. Drag the title bar to move the window.</p>
-        <video id="popupPlayer" controls playsinline style="width:100%;height:320px;background:#000;border-radius:8px;"></video>
-        <div style="display:flex;gap:8px;margin-top:10px">
-          <button id="popupStartCam">Start Cam</button>
-          <button id="popupStopCam">Stop Cam</button>
-          <input id="popupUrl" type="text" placeholder="Paste stream URL" style="flex:1;padding:8px;border-radius:6px;background:#120202;border:1px solid rgba(255,255,255,0.04);color:var(--light)">
-          <button id="popupLoad">Load</button>
-        </div>
-      </div>
     </div>
   </div>
 
-  <div id="saveNotification">Saved successfully ✅</div>
-
   <script>
-    /* ---------- Utility: header-aware scrolling ---------- */
-    const headerHeight = document.querySelector('.topbar').offsetHeight || 72;
-    document.querySelectorAll('nav.topnav a').forEach(a => {
-      a.addEventListener('click', (e) => {
-        e.preventDefault();
-        const id = a.getAttribute('data-target');
-        const el = document.getElementById(id);
-        if (!el) return;
-        const top = el.getBoundingClientRect().top + window.scrollY - headerHeight - 12;
-        window.scrollTo({top,behavior:'smooth'});
-      });
-    });
+    // === BLOG POST LOGIC ===
+    const postsContainer = document.getElementById('posts');
+    const publishBtn = document.getElementById('publish');
+    const titleInput = document.getElementById('postTitle');
+    const textInput = document.getElementById('postText');
+    const mediaInput = document.getElementById('postMedia');
 
-    /* ---------- Posts (localStorage) ---------- */
-    const POSTS_KEY = 'blarqCollegeBlogPosts_v1';
-    const postsEl = document.getElementById('posts');
-    const saveNotif = document.getElementById('saveNotification');
+    let posts = JSON.parse(localStorage.getItem('blarq_posts') || '[]');
+    renderPosts();
 
-    function loadPosts(){
-      try{ return JSON.parse(localStorage.getItem(POSTS_KEY)) || []; }catch(e){return []}
-    }
-    function savePosts(list){ localStorage.setItem(POSTS_KEY, JSON.stringify(list)); showSaved(); }
-    function showSaved(){ saveNotif.style.opacity='1'; setTimeout(()=>saveNotif.style.opacity='0',2200); }
+    publishBtn.addEventListener('click', () => {
+      const title = titleInput.value.trim();
+      const text = textInput.value.trim();
 
-    function render(){
-      const items = loadPosts(); postsEl.innerHTML='';
-      if (items.length===0){ postsEl.innerHTML = '<p style="color:#bbb">No posts yet — create one on the left.</p>' }
-      items.forEach((p, idx)=>{
-        const div = document.createElement('article'); div.className='post';
-        const h = document.createElement('h3'); h.textContent = p.title || '';
-        const txt = document.createElement('p'); txt.textContent = p.text || '';
-        const meta = document.createElement('small'); meta.textContent = 'Posted on '+ (p.timestamp || '');
-        const del = document.createElement('button'); del.className='delete'; del.textContent='Delete'; del.onclick = ()=>{ if(confirm('Delete this post?')){ const arr = loadPosts(); arr.splice(idx,1); savePosts(arr); render(); }};
-        div.appendChild(del);
-        if (p.title) div.appendChild(h);
-        if (p.text) div.appendChild(txt);
-        if (p.media && p.media.length){
-          const wrap = document.createElement('div'); wrap.className='media';
-          p.media.forEach(m=>{
-            if (m.type==='image'){
-              const img = document.createElement('img'); img.src = m.data; wrap.appendChild(img);
-            } else if (m.type==='video'){
-              const v = document.createElement('video'); v.src = m.data; v.controls=true; wrap.appendChild(v);
-            }
-          });
-          div.appendChild(wrap);
-        }
-        div.appendChild(meta);
-        postsEl.appendChild(div);
-      });
-    }
-
-    // publish post
-    document.getElementById('publish').addEventListener('click', ()=>{
-      const title = document.getElementById('postTitle').value.trim();
-      const text = document.getElementById('postText').value.trim();
-      const files = Array.from(document.getElementById('postMedia').files || []);
-      if (!title && !text && files.length===0) return alert('Please add text or media.');
-      const post = {title,text,media:[],timestamp: new Date().toLocaleString()};
-      if (files.length){
-        let loaded = 0;
-        files.forEach(f=>{
-          const r = new FileReader();
-          r.onload = e=>{
-            post.media.push({type: f.type.startsWith('video')? 'video':'image', data: e.target.result});
-            loaded++; if (loaded===files.length){
-              const arr = loadPosts(); arr.unshift(post); savePosts(arr); render(); document.getElementById('postTitle').value=''; document.getElementById('postText').value=''; document.getElementById('postMedia').value='';
-            }
-          };
-          r.readAsDataURL(f);
-        });
-      } else {
-        const arr = loadPosts(); arr.unshift(post); savePosts(arr); render(); document.getElementById('postTitle').value=''; document.getElementById('postText').value='';
+      if (!title && !text && !mediaInput.files.length) {
+        alert('Write something or upload media first!');
+        return;
       }
-    });
 
-    render();
+      const post = {
+        id: Date.now(),
+        title,
+        text,
+        media: [],
+        date: new Date().toLocaleString()
+      };
 
-    /* ---------- stream player controls (sidebar & popup) ---------- */
-    let camStream = null;
-    const streamPlayer = document.getElementById('streamPlayer');
-    const popupPlayer = document.getElementById('popupPlayer');
-
-    async function startCamFor(el){
-      try{
-        const s = await navigator.mediaDevices.getUserMedia({video:true,audio:false});
-        if (el===popupPlayer){
-          if (camStream) camStream.getTracks().forEach(t=>t.stop());
-          camStream = s; popupPlayer.srcObject = s; popupPlayer.play();
-        } else {
-          if (camStream) camStream.getTracks().forEach(t=>t.stop());
-          camStream = s; streamPlayer.srcObject = s; streamPlayer.play();
+      if (mediaInput.files.length > 0) {
+        for (const file of mediaInput.files) {
+          const reader = new FileReader();
+          reader.onload = e => {
+            post.media.push({ type: file.type.startsWith('video') ? 'video' : 'image', data: e.target.result });
+            saveAndRender(post);
+          };
+          reader.readAsDataURL(file);
         }
-      }catch(e){ alert('Camera access failed: '+e.message) }
+      } else {
+        saveAndRender(post);
+      }
+
+      titleInput.value = '';
+      textInput.value = '';
+      mediaInput.value = '';
+    });
+
+    function saveAndRender(post) {
+      if (!posts.find(p => p.id === post.id)) posts.unshift(post);
+      localStorage.setItem('blarq_posts', JSON.stringify(posts));
+      renderPosts();
     }
-    function stopCam(){ if (camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; streamPlayer.srcObject=null; popupPlayer.srcObject=null; }}
 
-    document.getElementById('startCam').addEventListener('click', ()=> startCamFor(streamPlayer));
-    document.getElementById('stopCam').addEventListener('click', ()=> stopCam());
-    document.getElementById('loadUrl').addEventListener('click', ()=>{
-      const u = document.getElementById('streamUrl').value.trim(); if(!u) return alert('Enter a URL'); if(camStream) stopCam(); streamPlayer.src = u; streamPlayer.play().catch(()=>{});
-    });
-
-    // popup controls
-    const overlay = document.getElementById('overlay');
-    const popup = document.getElementById('popup');
-    const streamBtn = document.getElementById('streamBtn');
-
-    streamBtn.addEventListener('click', ()=>{ overlay.classList.add('show'); });
-    document.getElementById('closePopup').addEventListener('click', ()=>{ overlay.classList.remove('show'); stopCam(); popup.style.left = ''; popup.style.top = ''; });
-
-    document.getElementById('popupStartCam').addEventListener('click', ()=> startCamFor(popupPlayer));
-    document.getElementById('popupStopCam').addEventListener('click', ()=> stopCam());
-    document.getElementById('popupLoad').addEventListener('click', ()=>{
-      const u = document.getElementById('popupUrl').value.trim(); if(!u) return alert('Enter a URL'); if(camStream) stopCam(); popupPlayer.src = u; popupPlayer.play().catch(()=>{});
-    });
-
-    /* ---------- draggable popup (titlebar drag) ---------- */
-    (function(){
-      const handle = document.getElementById('dragHandle');
-      let isDown=false, startX=0,startY=0,origX=0,origY=0;
-      handle.addEventListener('mousedown', (e)=>{
-        isDown=true; handle.style.cursor='grabbing'; startX=e.clientX; startY=e.clientY;
-        const rect = popup.getBoundingClientRect(); origX = rect.left; origY = rect.top;
-        document.body.style.userSelect='none';
+    function renderPosts() {
+      postsContainer.innerHTML = '';
+      posts.forEach(post => {
+        const el = document.createElement('div');
+        el.className = 'post';
+        el.innerHTML = `
+          <button class="delete" data-id="${post.id}">×</button>
+          ${post.title ? `<h3>${post.title}</h3>` : ''}
+          ${post.text ? `<p>${post.text}</p>` : ''}
+          <small>${post.date}</small>
+          ${post.media.map(m => m.type === 'image'
+            ? `<div class="media"><img src="${m.data}"></div>`
+            : `<div class="media"><video controls src="${m.data}"></video></div>`
+          ).join('')}
+        `;
+        postsContainer.appendChild(el);
       });
-      window.addEventListener('mousemove',(e)=>{
-        if(!isDown) return; const dx = e.clientX - startX; const dy = e.clientY - startY;
-        popup.style.position='fixed'; popup.style.left = (origX + dx)+'px'; popup.style.top = (origY + dy)+'px';
+
+      document.querySelectorAll('.delete').forEach(btn => {
+        btn.addEventListener('click', e => {
+          const id = Number(e.target.dataset.id);
+          posts = posts.filter(p => p.id !== id);
+          localStorage.setItem('blarq_posts', JSON.stringify(posts));
+          renderPosts();
+        });
       });
-      window.addEventListener('mouseup', ()=>{ if(isDown){ isDown=false; handle.style.cursor='grab'; document.body.style.userSelect='auto'; } });
-      // touch support
-      handle.addEventListener('touchstart',(e)=>{
-        isDown=true;
-        startX = e.touches[0].clientX; startY = e.touches[0].clientY;
-        const rect = popup.getBoundingClientRect(); origX = rect.left; origY = rect.top;
-      },{passive:true});
-      window.addEventListener('touchmove',(e)=>{
-        if(!isDown) return;
-        const dx = e.touches[0].clientX - startX; const dy = e.touches[0].clientY - startY;
-        popup.style.position='fixed'; popup.style.left = (origX + dx)+'px'; popup.style.top = (origY + dy)+'px';
-      },{passive:true});
-      window.addEventListener('touchend',()=>{ isDown=false; });
-    })();
+    }
 
-    /* close overlay on background click */
-    overlay.addEventListener('click', (e)=>{ if(e.target===overlay){ overlay.classList.remove('show'); stopCam(); popup.style.left = ''; popup.style.top = ''; }});
+    // === STREAMING POPUP LOGIC ===
+    const streamBtn = document.createElement('div');
+    streamBtn.className = 'stream-btn';
+    streamBtn.innerHTML = `
+      <div class="s-circle">S</div>
+      <div class="s-label">Stream</div>
+    `;
+    document.body.appendChild(streamBtn);
 
+    const overlay = document.createElement('div');
+    overlay.className = 'overlay';
+    overlay.innerHTML = `
+      <div class="popup" id="popupWindow">
+        <div class="titlebar">
+          <h4>Live Stream</h4>
+          <button class="close">&times;</button>
+        </div>
+        <div class="content">
+          <video id="popupVideo" controls autoplay playsinline></video>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const popup = document.getElementById('popupWindow');
+    const popupVideo = document.getElementById('popupVideo');
+    const closePopup = popup.querySelector('.close');
+
+    streamBtn.onclick = () => overlay.classList.add('show');
+    closePopup.onclick = () => overlay.classList.remove('show');
+
+    // draggable popup
+    let isDragging = false, startX, startY, initX, initY;
+    popup.querySelector('.titlebar').addEventListener('mousedown', e => {
+      isDragging = true;
+      startX = e.clientX; startY = e.clientY;
+      const rect = popup.getBoundingClientRect();
+      initX = rect.left; initY = rect.top;
+    });
+    document.addEventListener('mouseup', () => isDragging = false);
+    document.addEventListener('mousemove', e => {
+      if (!isDragging) return;
+      popup.style.position = 'fixed';
+      popup.style.left = initX + (e.clientX - startX) + 'px';
+      popup.style.top = initY + (e.clientY - startY) + 'px';
+    });
   </script>
 </body>
 </html>
